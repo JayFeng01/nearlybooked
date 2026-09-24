@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NearlyBooked — League City Party Vendors</title>
+<style>
+  :root{
+    --bg:#fdfaf6; --card:#ffffff; --ink:#231f20; --sub:#6b6560;
+    --accent:#e85d3d; --accent2:#2c7a7b; --line:#eee3d8;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
+  }
+  :root[data-theme="dark"]{ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  *{box-sizing:border-box;}
+  body{height:100%; margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+  header{position:sticky; top:env(safe-area-inset-top,0px); background:var(--bg); border-bottom:1px solid var(--line); padding:18px 20px 14px; z-index:10;}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .brand h1{font-size:1.5rem; margin:0; letter-spacing:-0.02em;}
+  .brand h1 span{color:var(--accent);}
+  .tagline{color:var(--sub); font-size:0.85rem; margin:2px 0 14px;}
+  .listbtn{padding:9px 16px; border:none; border-radius:999px; background:var(--accent2); color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer;}
+  .filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;}
+  .filters::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; white-space:nowrap;}
+  .chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  main{max-width:900px; margin:0 auto; padding:20px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px;}
+  .cat{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent2); font-weight:600;}
+  .name{font-size:1.05rem; font-weight:600; margin:0;}
+  .area{color:var(--sub); font-size:0.85rem;}
+  .rating{font-size:0.85rem; color:var(--sub);}
+  .btn{margin-top:6px; align-self:flex-start; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; border:none; cursor:pointer;}
+  .empty{text-align:center; color:var(--sub); padding:40px 0;}
+  footer{text-align:center; color:var(--sub); font-size:0.8rem; padding:30px 20px;}
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card); border-radius:14px; padding:22px; width:100%; max-width:380px; display:flex; flex-direction:column; gap:10px; max-height:90vh; overflow:auto;}
+  .modal h2{margin:0 0 4px; font-size:1.1rem;}
+  .modal input, .modal select{padding:10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-size:0.9rem;}
+  .modal .row2{display:flex; gap:8px;}
+  .modal .row2 button{flex:1;}
+  .cancel{background:transparent; color:var(--sub); border:1px solid var(--line);}
+  .status{font-size:0.8rem; color:var(--accent2); min-height:1em;}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div class="brand"><h1>Nearly<span>Booked</span></h1></div>
+    <button class="listbtn" id="openForm">+ List your business</button>
+  </div>
+  <p class="tagline">Find local party vendors in League City — all in one place.</p>
+  <div class="filters" id="filters"></div>
+</header>
+<main>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" style="display:none;">No vendors in this category yet — check back soon.</p>
+</main>
+<footer>NearlyBooked · League City, TX</footer>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>List your business — free</h2>
+    <input id="fName" placeholder="Business name">
+    <select id="fCat">
+      <option>Photography</option><option>Entertainment</option><option>Bounce Houses</option>
+      <option>Party Rentals</option><option>Bakery</option><option>Catering</option><option>DJ</option>
+    </select>
+    <input id="fArea" placeholder="Area (e.g. League City)">
+    <input id="fEmail" placeholder="Contact email">
+    <p class="status" id="formStatus"></p>
+    <div class="row2">
+      <button class="btn cancel" id="cancelForm">Cancel</button>
+      <button class="btn" id="submitForm">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const seed = [
+  {name:"Bryan Anderson Photo", cat:"Photography", area:"League City", rating:"4.9★", email:"bryan@bryanandersonweddings.com"},
+  {name:"Jacob Kitchens Photography", cat:"Photography", area:"League City", rating:"5.0★", email:"jacob@jacobkitchens.com"},
+  {name:"GracefulLee Photography", cat:"Photography", area:"Friendswood", rating:"5.0★", email:"gracefulleephotography@yahoo.com"},
+  {name:"Fired Up Entertainment", cat:"Entertainment", area:"League City", rating:"5.0★", email:"info@firedupentertainmenttx.com"},
+  {name:"Houston Characters and Superheroes", cat:"Entertainment", area:"Houston", rating:"4.8★", email:"ppreyna86@gmail.com"},
+  {name:"The Magic Party", cat:"Entertainment", area:"Houston", rating:"4.9★", email:"info@TheMagicParty.com"},
+  {name:"WOW Party Art", cat:"Entertainment", area:"Houston", rating:"4.8★", email:"book@wowpartyart.com"},
+  {name:"Please Mr DJ Entertainment", cat:"DJ", area:"Houston", rating:"4.7★", email:"info@pleasemrdj.com"},
+  {name:"Benzies Bounce House & Party Rentals", cat:"Bounce Houses", area:"League City", rating:"4.9★", email:null},
+  {name:"Rock Tha House Moonwalks", cat:"Bounce Houses", area:"La Marque", rating:"4.8★", email:"teamrockrentals@yahoo.com"},
+  {name:"House of Bounce Alvin", cat:"Bounce Houses", area:"Alvin", rating:"4.9★", email:"houseofbouncealvin@gmail.com"},
+  {name:"Orbit Moonwalks and Party Rentals", cat:"Bounce Houses", area:"Pearland", rating:"4.8★", email:"info@orbitmoonwalks.com"},
+  {name:"One Stop Tents & Events", cat:"Party Rentals", area:"Webster", rating:"4.9★", email:"info@onestopparty.com"},
+  {name:"Craved Creations", cat:"Bakery", area:"League City", rating:"4.9★", email:"info@cravedcreations.com"},
+  {name:"Not Your Ordinary Cakes", cat:"Bakery", area:"League City", rating:"4.8★", email:"nyocakery@gmail.com"},
+  {name:"Cakes by Jula", cat:"Bakery", area:"League City", rating:"4.1★", email:"cakes@cakesbyjula.com"},
+  {name:"The Box Bakery", cat:"Bakery", area:"League City", rating:"4.9★", email:"theboxbakerylc@gmail.com"},
+  {name:"Buttercream Houston", cat:"Bakery", area:"League City", rating:"5.0★", email:"contact.buttercream@gmail.com"},
+  {name:"Hedrick's Catering & Events", cat:"Catering", area:"League City", rating:"4.8★", email:"info@hedrickscatering.com"}
+];
+
+let vendors = [...seed];
+let activeCat = "All";
+const gridEl = document.getElementById('grid');
+const emptyEl = document.getElementById('empty');
+const filtersEl = document.getElementById('filters');
+
+function renderFilters(){
+  const cats = ["All", ...new Set(vendors.map(v=>v.cat))];
+  filtersEl.innerHTML = cats.map(c=>`<button class="chip${c===activeCat?' active':''}" data-cat="${c}">${c}</button>`).join('');
+  filtersEl.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ activeCat = btn.dataset.cat; renderFilters(); renderGrid(); });
+  });
+}
+
+function renderGrid(){
+  const list = activeCat==="All" ? vendors : vendors.filter(v=>v.cat===activeCat);
+  gridEl.innerHTML = list.map(v => `
+    <div class="card">
+      <span class="cat">${v.cat}</span>
+      <p class="name">${v.name}</p>
+      <span class="area">${v.area}</span>
+      <span class="rating">${v.rating||''}</span>
+      ${v.email ? `<a class="btn" href="mailto:${v.email}">Contact</a>` : `<span class="area">Contact via phone</span>`}
+    </div>`).join('');
+  emptyEl.style.display = list.length ? 'none' : 'block';
+}
+
+renderFilters();
+renderGrid();
+
+// Modal wiring
+const modalBg = document.getElementById('modalBg');
+document.getElementById('openForm').onclick = ()=> modalBg.classList.add('open');
+document.getElementById('cancelForm').onclick = ()=> modalBg.classList.remove('open');
+
+// Live shared data via db capability, when available
+(async () => {
+  let db;
+  try { db = await claude.use("db"); } catch(e) { db = null; }
+  if (!db) return; // static seed-only mode
+
+  const col = db.collection("vendors");
+  // Seed once if empty
+  const snap = await col.get();
+  if (snap.docs.length === 0) {
+    for (const v of seed) { await col.add(v); }
+  }
+  col.onSnapshot(qs => {
+    const live = qs.docs.map(d => d.data());
+    if (live.length) { vendors = live; renderFilters(); renderGrid(); }
+  }, err => { /* fall back to seed silently */ });
+
+  document.getElementById('submitForm').onclick = async () => {
+    const name = document.getElementById('fName').value.trim();
+    const cat = document.getElementById('fCat').value;
+    const area = document.getElementById('fArea').value.trim();
+    const email = document.getElementById('fEmail').value.trim();
+    const statusEl = document.getElementById('formStatus');
+    if (!name || !area || !email) { statusEl.textContent = "Please fill in all fields."; return; }
+    statusEl.textContent = "Submitting...";
+    try {
+      await col.add({name, cat, area, email, rating:"New"});
+      statusEl.textContent = "Added! Thanks for joining NearlyBooked.";
+      setTimeout(()=>{ modalBg.classList.remove('open'); statusEl.textContent=""; 
+        document.getElementById('fName').value=''; document.getElementById('fArea').value=''; document.getElementById('fEmail').value=''; }, 1200);
+    } catch(e) {
+      statusEl.textContent = "Something went wrong — try again.";
+    }
+  };
+})();
+</script>
+</body>
+</html>
