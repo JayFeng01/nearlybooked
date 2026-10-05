@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NearlyBooked — League City Party Vendors</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --bg:#fdfaf6; --card:#ffffff; --ink:#231f20; --sub:#6b6560;
+    --accent:#e85d3d; --accent2:#2c7a7b; --line:#eee3d8;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
+  }
+  :root[data-theme="dark"]{ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  *{box-sizing:border-box;}
+  body{height:100%; margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+  header{position:sticky; top:env(safe-area-inset-top,0px); background:var(--bg); border-bottom:1px solid var(--line); padding:18px 20px 14px; z-index:10;}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .brand h1{font-size:1.5rem; margin:0; letter-spacing:-0.02em;}
+  .brand h1 span{color:var(--accent);}
+  .tagline{color:var(--sub); font-size:0.85rem; margin:2px 0 14px;}
+  .btn{padding:9px 16px; border:none; border-radius:999px; background:var(--accent2); color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer;}
+  .btn.alt{background:var(--accent);}
+  .btn.ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
+  .filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;}
+  .chip{flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; white-space:nowrap;}
+  .chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+  main{max-width:900px; margin:0 auto; padding:20px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px;}
+  .cat{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent2); font-weight:600;}
+  .name{font-size:1.05rem; font-weight:600; margin:0;}
+  .area,.rating{color:var(--sub); font-size:0.85rem;}
+  .mini{margin-top:6px; align-self:flex-start; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; border:none; cursor:pointer;}
+  .empty{text-align:center; color:var(--sub); padding:40px 0;}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:20px;}
+  .panel h2{margin:0 0 10px; font-size:1.05rem;}
+  input,select{width:100%; padding:10px; margin-bottom:8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-size:0.9rem;}
+  .status{font-size:0.8rem; color:var(--accent2); min-height:1.2em;}
+  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card); border-radius:14px; padding:22px; width:100%; max-width:360px;}
+  .modal h2{margin:0 0 10px; font-size:1.1rem;}
+  .switch{font-size:0.8rem; color:var(--accent2); cursor:pointer; text-align:center; margin-top:4px;}
+  footer{text-align:center; color:var(--sub); font-size:0.8rem; padding:30px 20px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div class="brand"><h1>Nearly<span>Booked</span></h1></div>
+    <div id="authArea"><button class="btn" id="openAuth">Vendor Log In</button></div>
+  </div>
+  <p class="tagline">Find local party vendors in League City — all in one place.</p>
+  <div class="filters" id="filters"></div>
+</header>
+<main>
+  <div id="myPanel"></div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" style="display:none;">No vendors in this category yet.</p>
+</main>
+<footer>NearlyBooked · League City, TX</footer>
+
+<div class="modal-bg" id="authModalBg">
+  <div class="modal">
+    <h2 id="authTitle">Vendor Log In</h2>
+    <input id="authEmail" placeholder="Email" type="email">
+    <input id="authPass" placeholder="Password" type="password">
+    <p class="status" id="authStatus"></p>
+    <button class="btn" id="authSubmit" style="width:100%">Log In</button>
+    <p class="switch" id="authSwitch">New vendor? Sign up instead</p>
+    <p class="switch" id="authCancel">Cancel</p>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://rrxvfjtgutdcnsazydep.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OQueaPLqab2fgQ0pLgA02A_JhAoBKGl";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const CATS = ["Photography","Entertainment","Bounce Houses","Party Rentals","Bakery","Catering","DJ"];
+let vendors = [];
+let activeCat = "All";
+let session = null;
+
+const gridEl = document.getElementById('grid');
+const emptyEl = document.getElementById('empty');
+const filtersEl = document.getElementById('filters');
+const authArea = document.getElementById('authArea');
+const myPanel = document.getElementById('myPanel');
+
+async function loadVendors(){
+  const { data, error } = await sb.from('vendors').select('*');
+  vendors = data || [];
+  renderFilters(); renderGrid();
+}
+
+function renderFilters(){
+  const cats = ["All", ...new Set(vendors.map(v=>v.cat))];
+  filtersEl.innerHTML = cats.map(c=>`<button class="chip${c===activeCat?' active':''}" data-cat="${c}">${c}</button>`).join('');
+  filtersEl.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick = ()=>{ activeCat = btn.dataset.cat; renderFilters(); renderGrid(); };
+  });
+}
+
+function renderGrid(){
+  const list = activeCat==="All" ? vendors : vendors.filter(v=>v.cat===activeCat);
+  gridEl.innerHTML = list.map(v => `
+    <div class="card">
+      <span class="cat">${v.cat||''}</span>
+      <p class="name">${v.name}</p>
+      <span class="area">${v.area||''}</span>
+      <span class="rating">${v.rating||''}</span>
+      ${v.email ? `<a class="mini" href="mailto:${v.email}">Contact</a>` : ''}
+    </div>`).join('');
+  emptyEl.style.display = list.length ? 'none' : 'block';
+}
+
+function renderAuthArea(){
+  if (session){
+    authArea.innerHTML = `<button class="btn ghost" id="logoutBtn">Log Out</button>`;
+    document.getElementById('logoutBtn').onclick = async ()=>{ await sb.auth.signOut(); session=null; renderAuthArea(); renderMyPanel(); };
+  } else {
+    authArea.innerHTML = `<button class="btn" id="openAuth">Vendor Log In</button>`;
+    document.getElementById('openAuth').onclick = openAuthModal;
+  }
+}
+
+async function renderMyPanel(){
+  if (!session){ myPanel.innerHTML = ''; return; }
+  const mine = vendors.find(v => v.user_id === session.user.id);
+  myPanel.innerHTML = `
+    <div class="panel">
+      <h2>${mine ? 'My Listing' : 'Add Your Listing — Free'}</h2>
+      <input id="mName" placeholder="Business name" value="${mine ? mine.name : ''}">
+      <select id="mCat">${CATS.map(c=>`<option ${mine && mine.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+      <input id="mArea" placeholder="Area (e.g. League City)" value="${mine ? mine.area||'' : ''}">
+      <input id="mEmail" placeholder="Contact email" value="${mine ? mine.email||'' : ''}">
+      <p class="status" id="mStatus"></p>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="mSave" style="flex:1">${mine ? 'Save Changes' : 'Add Listing'}</button>
+        ${mine ? `<button class="btn ghost" id="mDelete">Delete</button>` : ''}
+      </div>
+    </div>`;
+  document.getElementById('mSave').onclick = async ()=>{
+    const name = document.getElementById('mName').value.trim();
+    const cat = document.getElementById('mCat').value;
+    const area = document.getElementById('mArea').value.trim();
+    const email = document.getElementById('mEmail').value.trim();
+    const statusEl = document.getElementById('mStatus');
+    if (!name || !area || !email){ statusEl.textContent = "Fill in all fields."; return; }
+    statusEl.textContent = "Saving...";
+    let res;
+    if (mine){
+      res = await sb.from('vendors').update({name,cat,area,email}).eq('user_id', session.user.id);
+    } else {
+      res = await sb.from('vendors').insert({name,cat,area,email,user_id:session.user.id,rating:"New"});
+    }
+    if (res.error){ statusEl.textContent = "Error: " + res.error.message; return; }
+    statusEl.textContent = "Saved!";
+    await loadVendors(); renderMyPanel();
+  };
+  if (mine){
+    document.getElementById('mDelete').onclick = async ()=>{
+      if (!confirm("Delete your listing?")) return;
+      await sb.from('vendors').delete().eq('user_id', session.user.id);
+      await loadVendors(); renderMyPanel();
+    };
+  }
+}
+
+// Auth modal
+let authMode = 'login';
+const authModalBg = document.getElementById('authModalBg');
+function openAuthModal(){ authModalBg.classList.add('open'); }
+document.getElementById('authCancel').onclick = ()=> authModalBg.classList.remove('open');
+document.getElementById('authSwitch').onclick = ()=>{
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  document.getElementById('authTitle').textContent = authMode==='login' ? 'Vendor Log In' : 'Vendor Sign Up';
+  document.getElementById('authSubmit').textContent = authMode==='login' ? 'Log In' : 'Sign Up';
+  document.getElementById('authSwitch').textContent = authMode==='login' ? 'New vendor? Sign up instead' : 'Already have an account? Log in';
+};
+document.getElementById('authSubmit').onclick = async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPass').value;
+  const statusEl = document.getElementById('authStatus');
+  if (!email || !password){ statusEl.textContent = "Enter email and password."; return; }
+  statusEl.textContent = "Working...";
+  const fn = authMode==='login' ? sb.auth.signInWithPassword({email,password}) : sb.auth.signUp({email,password});
+  const { data, error } = await fn;
+  if (error){ statusEl.textContent = error.message; return; }
+  session = data.session;
+  authModalBg.classList.remove('open');
+  statusEl.textContent = '';
+  renderAuthArea(); renderMyPanel();
+};
+
+(async () => {
+  const { data: { session: s } } = await sb.auth.getSession();
+  session = s;
+  await loadVendors();
+  renderAuthArea();
+  renderMyPanel();
+})();
+</script>
+</body>
+</html>
