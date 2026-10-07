@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NearlyBooked — League City Party Vendors</title>
+<meta name="description" content="Find bounce houses, photographers, entertainers, bakeries and more for your party in League City, TX.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
@@ -24,7 +25,6 @@
   .brand h1 span{color:var(--accent);}
   .tagline{color:var(--sub); font-size:0.85rem; margin:2px 0 14px;}
   .btn{padding:9px 16px; border:none; border-radius:999px; background:var(--accent2); color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer;}
-  .btn.alt{background:var(--accent);}
   .btn.ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
   .filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;}
   .chip{flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; white-space:nowrap;}
@@ -35,6 +35,9 @@
   .cat{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent2); font-weight:600;}
   .name{font-size:1.05rem; font-weight:600; margin:0;}
   .area,.rating{color:var(--sub); font-size:0.85rem;}
+  .photo{width:100%; height:150px; object-fit:cover; border-radius:10px; background:var(--line);}
+  .site{color:var(--accent2); font-size:0.85rem; word-break:break-all;}
+  .hint{font-size:0.75rem; color:var(--sub); margin:-4px 0 8px;}
   .mini{margin-top:6px; align-self:flex-start; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; border:none; cursor:pointer;}
   .empty{text-align:center; color:var(--sub); padding:40px 0;}
   .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:20px;}
@@ -93,6 +96,24 @@ const filtersEl = document.getElementById('filters');
 const authArea = document.getElementById('authArea');
 const myPanel = document.getElementById('myPanel');
 
+// Escape text so nobody can inject HTML into the page
+function esc(t){
+  return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+// Only allow normal http/https links
+function safeUrl(u){
+  if (!u) return '';
+  u = String(u).trim();
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try {
+    const x = new URL(u);
+    return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : '';
+  } catch(e){ return ''; }
+}
+
 async function loadVendors(){
   const { data, error } = await sb.from('vendors').select('*');
   vendors = data || [];
@@ -101,7 +122,7 @@ async function loadVendors(){
 
 function renderFilters(){
   const cats = ["All", ...new Set(vendors.map(v=>v.cat))];
-  filtersEl.innerHTML = cats.map(c=>`<button class="chip${c===activeCat?' active':''}" data-cat="${c}">${c}</button>`).join('');
+  filtersEl.innerHTML = cats.map(c=>`<button class="chip${c===activeCat?' active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
   filtersEl.querySelectorAll('.chip').forEach(btn=>{
     btn.onclick = ()=>{ activeCat = btn.dataset.cat; renderFilters(); renderGrid(); };
   });
@@ -109,61 +130,95 @@ function renderFilters(){
 
 function renderGrid(){
   const list = activeCat==="All" ? vendors : vendors.filter(v=>v.cat===activeCat);
-  gridEl.innerHTML = list.map(v => `
+  gridEl.innerHTML = list.map(v => {
+    const photo = safeUrl(v.photo_url);
+    const site = safeUrl(v.website);
+    return `
     <div class="card">
-      <span class="cat">${v.cat||''}</span>
-      <p class="name">${v.name}</p>
-      <span class="area">${v.area||''}</span>
-      <span class="rating">${v.rating||''}</span>
-      ${v.email ? `<a class="mini" href="mailto:${v.email}">Contact</a>` : ''}
-    </div>`).join('');
+      ${photo ? `<img class="photo" src="${esc(photo)}" alt="${esc(v.name)}" loading="lazy">` : ''}
+      <span class="cat">${esc(v.cat)}</span>
+      <p class="name">${esc(v.name)}</p>
+      <span class="area">${esc(v.area)}</span>
+      <span class="rating">${esc(v.rating)}</span>
+      ${site ? `<a class="site" href="${esc(site)}" target="_blank" rel="noopener noreferrer">Visit website</a>` : ''}
+      ${v.email ? `<a class="mini" href="mailto:${esc(v.email)}">Contact</a>` : ''}
+    </div>`;
+  }).join('');
   emptyEl.style.display = list.length ? 'none' : 'block';
 }
 
 function renderAuthArea(){
   if (session){
     authArea.innerHTML = `<button class="btn ghost" id="logoutBtn">Log Out</button>`;
-    document.getElementById('logoutBtn').onclick = async ()=>{ await sb.auth.signOut(); session=null; renderAuthArea(); renderMyPanel(); };
+    document.getElementById('logoutBtn').onclick = async ()=>{
+      await sb.auth.signOut(); session = null; renderAuthArea(); renderMyPanel();
+    };
   } else {
     authArea.innerHTML = `<button class="btn" id="openAuth">Vendor Log In</button>`;
     document.getElementById('openAuth').onclick = openAuthModal;
   }
 }
 
-async function renderMyPanel(){
+function renderMyPanel(){
   if (!session){ myPanel.innerHTML = ''; return; }
   const mine = vendors.find(v => v.user_id === session.user.id);
+  const currentPhoto = mine ? safeUrl(mine.photo_url) : '';
   myPanel.innerHTML = `
     <div class="panel">
       <h2>${mine ? 'My Listing' : 'Add Your Listing — Free'}</h2>
-      <input id="mName" placeholder="Business name" value="${mine ? mine.name : ''}">
-      <select id="mCat">${CATS.map(c=>`<option ${mine && mine.cat===c?'selected':''}>${c}</option>`).join('')}</select>
-      <input id="mArea" placeholder="Area (e.g. League City)" value="${mine ? mine.area||'' : ''}">
-      <input id="mEmail" placeholder="Contact email" value="${mine ? mine.email||'' : ''}">
+      <input id="mName" placeholder="Business name" value="${esc(mine ? mine.name : '')}">
+      <select id="mCat">${CATS.map(c=>`<option ${mine && mine.cat===c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <input id="mArea" placeholder="Area (e.g. League City)" value="${esc(mine ? mine.area : '')}">
+      <input id="mEmail" placeholder="Contact email" value="${esc(mine ? mine.email : '')}">
+      <input id="mWebsite" placeholder="Website (optional)" value="${esc(mine ? mine.website : '')}">
+      ${currentPhoto ? `<img class="photo" src="${esc(currentPhoto)}" alt="Current photo" style="margin-bottom:8px">` : ''}
+      <input id="mPhoto" type="file" accept="image/*">
+      <p class="hint">Photo (optional, max 5 MB). Choosing a new one replaces the current photo.</p>
       <p class="status" id="mStatus"></p>
       <div style="display:flex; gap:8px;">
         <button class="btn" id="mSave" style="flex:1">${mine ? 'Save Changes' : 'Add Listing'}</button>
         ${mine ? `<button class="btn ghost" id="mDelete">Delete</button>` : ''}
       </div>
     </div>`;
+
   document.getElementById('mSave').onclick = async ()=>{
     const name = document.getElementById('mName').value.trim();
     const cat = document.getElementById('mCat').value;
     const area = document.getElementById('mArea').value.trim();
     const email = document.getElementById('mEmail').value.trim();
+    const website = document.getElementById('mWebsite').value.trim();
+    const file = document.getElementById('mPhoto').files[0];
     const statusEl = document.getElementById('mStatus');
-    if (!name || !area || !email){ statusEl.textContent = "Fill in all fields."; return; }
+
+    if (!name || !area || !email){ statusEl.textContent = "Fill in name, area and email."; return; }
+    if (website && !safeUrl(website)){ statusEl.textContent = "Enter a valid website link."; return; }
+    if (file){
+      if (!file.type.startsWith('image/')){ statusEl.textContent = "Photo must be an image."; return; }
+      if (file.size > 5 * 1024 * 1024){ statusEl.textContent = "Photo must be under 5 MB."; return; }
+    }
+
     statusEl.textContent = "Saving...";
+    const fields = { name, cat, area, email, website: safeUrl(website) };
+
+    if (file){
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = session.user.id + '/' + Date.now() + '.' + ext;
+      const up = await sb.storage.from('vendor-photos').upload(path, file);
+      if (up.error){ statusEl.textContent = "Photo upload failed: " + up.error.message; return; }
+      fields.photo_url = sb.storage.from('vendor-photos').getPublicUrl(path).data.publicUrl;
+    }
+
     let res;
     if (mine){
-      res = await sb.from('vendors').update({name,cat,area,email}).eq('user_id', session.user.id);
+      res = await sb.from('vendors').update(fields).eq('user_id', session.user.id);
     } else {
-      res = await sb.from('vendors').insert({name,cat,area,email,user_id:session.user.id,rating:"New"});
+      res = await sb.from('vendors').insert({ ...fields, user_id: session.user.id, rating: "New" });
     }
     if (res.error){ statusEl.textContent = "Error: " + res.error.message; return; }
     statusEl.textContent = "Saved!";
     await loadVendors(); renderMyPanel();
   };
+
   if (mine){
     document.getElementById('mDelete').onclick = async ()=>{
       if (!confirm("Delete your listing?")) return;
@@ -173,7 +228,7 @@ async function renderMyPanel(){
   }
 }
 
-// Auth modal
+// Login / signup popup
 let authMode = 'login';
 const authModalBg = document.getElementById('authModalBg');
 function openAuthModal(){ authModalBg.classList.add('open'); }
@@ -190,18 +245,19 @@ document.getElementById('authSubmit').onclick = async ()=>{
   const statusEl = document.getElementById('authStatus');
   if (!email || !password){ statusEl.textContent = "Enter email and password."; return; }
   statusEl.textContent = "Working...";
-  const fn = authMode==='login' ? sb.auth.signInWithPassword({email,password}) : sb.auth.signUp({email,password});
-  const { data, error } = await fn;
-  if (error){ statusEl.textContent = error.message; return; }
-  session = data.session;
+  const result = authMode==='login'
+    ? await sb.auth.signInWithPassword({ email, password })
+    : await sb.auth.signUp({ email, password });
+  if (result.error){ statusEl.textContent = result.error.message; return; }
+  session = result.data.session;
   authModalBg.classList.remove('open');
   statusEl.textContent = '';
   renderAuthArea(); renderMyPanel();
 };
 
 (async () => {
-  const { data: { session: s } } = await sb.auth.getSession();
-  session = s;
+  const { data } = await sb.auth.getSession();
+  session = data.session;
   await loadVendors();
   renderAuthArea();
   renderMyPanel();
