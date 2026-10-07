@@ -36,8 +36,15 @@
   .name{font-size:1.05rem; font-weight:600; margin:0;}
   .area,.rating{color:var(--sub); font-size:0.85rem;}
   .photo{width:100%; height:150px; object-fit:cover; border-radius:10px; background:var(--line);}
+  .strip{display:flex; gap:6px;}
+  .sthumb{width:48px; height:48px; object-fit:cover; border-radius:6px; cursor:pointer; opacity:.85;}
+  .sthumb:hover{opacity:1;}
   .site{color:var(--accent2); font-size:0.85rem; word-break:break-all;}
   .hint{font-size:0.75rem; color:var(--sub); margin:-4px 0 8px;}
+  .thumbs{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
+  .thumbwrap{position:relative;}
+  .thumb{width:70px; height:70px; object-fit:cover; border-radius:8px; display:block;}
+  .x{position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%; border:none; background:var(--accent); color:#fff; cursor:pointer; line-height:1; font-size:14px; padding:0;}
   .mini{margin-top:6px; align-self:flex-start; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; border:none; cursor:pointer;}
   .empty{text-align:center; color:var(--sub); padding:40px 0;}
   .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:20px;}
@@ -86,6 +93,7 @@ const SUPABASE_KEY = "sb_publishable_OQueaPLqab2fgQ0pLgA02A_JhAoBKGl";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const CATS = ["Photography","Entertainment","Bounce Houses","Party Rentals","Bakery","Catering","DJ"];
+const MAX_PHOTOS = 4;
 let vendors = [];
 let activeCat = "All";
 let session = null;
@@ -114,6 +122,16 @@ function safeUrl(u){
   } catch(e){ return ''; }
 }
 
+// Get a vendor's photos (max 4). Falls back to the old single photo_url.
+function getPhotos(v){
+  let p = Array.isArray(v.photos) ? v.photos.map(safeUrl).filter(Boolean) : [];
+  if (!p.length && v.photo_url){
+    const u = safeUrl(v.photo_url);
+    if (u) p = [u];
+  }
+  return p.slice(0, MAX_PHOTOS);
+}
+
 async function loadVendors(){
   const { data, error } = await sb.from('vendors').select('*');
   vendors = data || [];
@@ -131,11 +149,12 @@ function renderFilters(){
 function renderGrid(){
   const list = activeCat==="All" ? vendors : vendors.filter(v=>v.cat===activeCat);
   gridEl.innerHTML = list.map(v => {
-    const photo = safeUrl(v.photo_url);
+    const photos = getPhotos(v);
     const site = safeUrl(v.website);
     return `
     <div class="card">
-      ${photo ? `<img class="photo" src="${esc(photo)}" alt="${esc(v.name)}" loading="lazy">` : ''}
+      ${photos.length ? `<img class="photo main" src="${esc(photos[0])}" alt="${esc(v.name)}" loading="lazy">` : ''}
+      ${photos.length > 1 ? `<div class="strip">${photos.map((u,i)=>`<img class="sthumb" src="${esc(u)}" data-full="${esc(u)}" alt="Photo ${i+1} of ${esc(v.name)}" loading="lazy">`).join('')}</div>` : ''}
       <span class="cat">${esc(v.cat)}</span>
       <p class="name">${esc(v.name)}</p>
       <span class="area">${esc(v.area)}</span>
@@ -146,6 +165,15 @@ function renderGrid(){
   }).join('');
   emptyEl.style.display = list.length ? 'none' : 'block';
 }
+
+// Click a small photo to show it big
+gridEl.addEventListener('click', function(e){
+  const t = e.target;
+  if (t.classList && t.classList.contains('sthumb')){
+    const main = t.closest('.card').querySelector('.photo.main');
+    if (main) main.src = t.dataset.full;
+  }
+});
 
 function renderAuthArea(){
   if (session){
@@ -162,7 +190,8 @@ function renderAuthArea(){
 function renderMyPanel(){
   if (!session){ myPanel.innerHTML = ''; return; }
   const mine = vendors.find(v => v.user_id === session.user.id);
-  const currentPhoto = mine ? safeUrl(mine.photo_url) : '';
+  let keep = mine ? getPhotos(mine) : [];
+
   myPanel.innerHTML = `
     <div class="panel">
       <h2>${mine ? 'My Listing' : 'Add Your Listing — Free'}</h2>
@@ -171,9 +200,9 @@ function renderMyPanel(){
       <input id="mArea" placeholder="Area (e.g. League City)" value="${esc(mine ? mine.area : '')}">
       <input id="mEmail" placeholder="Contact email" value="${esc(mine ? mine.email : '')}">
       <input id="mWebsite" placeholder="Website (optional)" value="${esc(mine ? mine.website : '')}">
-      ${currentPhoto ? `<img class="photo" src="${esc(currentPhoto)}" alt="Current photo" style="margin-bottom:8px">` : ''}
-      <input id="mPhoto" type="file" accept="image/*">
-      <p class="hint">Photo (optional, max 5 MB). Choosing a new one replaces the current photo.</p>
+      <div class="thumbs" id="mThumbs"></div>
+      <input id="mPhoto" type="file" accept="image/*" multiple>
+      <p class="hint">Up to 4 photos total, max 5 MB each. Click × on a photo to remove it.</p>
       <p class="status" id="mStatus"></p>
       <div style="display:flex; gap:8px;">
         <button class="btn" id="mSave" style="flex:1">${mine ? 'Save Changes' : 'Add Listing'}</button>
@@ -181,32 +210,51 @@ function renderMyPanel(){
       </div>
     </div>`;
 
+  function drawThumbs(){
+    const box = document.getElementById('mThumbs');
+    box.innerHTML = keep.map((u,i)=>`
+      <div class="thumbwrap">
+        <img class="thumb" src="${esc(u)}" alt="Photo ${i+1}">
+        <button type="button" class="x" data-i="${i}" aria-label="Remove photo ${i+1}">×</button>
+      </div>`).join('');
+    box.querySelectorAll('.x').forEach(b=>{
+      b.onclick = ()=>{ keep.splice(Number(b.dataset.i), 1); drawThumbs(); };
+    });
+  }
+  drawThumbs();
+
   document.getElementById('mSave').onclick = async ()=>{
     const name = document.getElementById('mName').value.trim();
     const cat = document.getElementById('mCat').value;
     const area = document.getElementById('mArea').value.trim();
     const email = document.getElementById('mEmail').value.trim();
     const website = document.getElementById('mWebsite').value.trim();
-    const file = document.getElementById('mPhoto').files[0];
+    const files = Array.from(document.getElementById('mPhoto').files);
     const statusEl = document.getElementById('mStatus');
 
     if (!name || !area || !email){ statusEl.textContent = "Fill in name, area and email."; return; }
     if (website && !safeUrl(website)){ statusEl.textContent = "Enter a valid website link."; return; }
-    if (file){
-      if (!file.type.startsWith('image/')){ statusEl.textContent = "Photo must be an image."; return; }
-      if (file.size > 5 * 1024 * 1024){ statusEl.textContent = "Photo must be under 5 MB."; return; }
+    if (keep.length + files.length > MAX_PHOTOS){
+      statusEl.textContent = "Max 4 photos. You have " + keep.length + " saved and picked " + files.length + " more. Remove some or pick fewer.";
+      return;
+    }
+    for (const f of files){
+      if (!f.type.startsWith('image/')){ statusEl.textContent = "All photos must be images."; return; }
+      if (f.size > 5 * 1024 * 1024){ statusEl.textContent = "Each photo must be under 5 MB."; return; }
     }
 
     statusEl.textContent = "Saving...";
-    const fields = { name, cat, area, email, website: safeUrl(website) };
-
-    if (file){
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const path = session.user.id + '/' + Date.now() + '.' + ext;
-      const up = await sb.storage.from('vendor-photos').upload(path, file);
+    const uploaded = [];
+    for (let i = 0; i < files.length; i++){
+      const f = files[i];
+      const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = session.user.id + '/' + Date.now() + '-' + i + '.' + ext;
+      const up = await sb.storage.from('vendor-photos').upload(path, f);
       if (up.error){ statusEl.textContent = "Photo upload failed: " + up.error.message; return; }
-      fields.photo_url = sb.storage.from('vendor-photos').getPublicUrl(path).data.publicUrl;
+      uploaded.push(sb.storage.from('vendor-photos').getPublicUrl(path).data.publicUrl);
     }
+
+    const fields = { name, cat, area, email, website: safeUrl(website), photos: [...keep, ...uploaded].slice(0, MAX_PHOTOS) };
 
     let res;
     if (mine){
