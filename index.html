@@ -7,56 +7,62 @@
 <meta name="description" content="Find bounce houses, photographers, entertainers, bakeries and more for your party in League City, TX.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-  :root{
-    --bg:#fdfaf6; --card:#ffffff; --ink:#231f20; --sub:#6b6560;
-    --accent:#e85d3d; --accent2:#2c7a7b; --line:#eee3d8;
-    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
-  }
-  :root[data-theme="dark"]{ --bg:#171412; --card:#221e1b; --ink:#f3ede6; --sub:#b7ada2; --line:#332c26; }
-  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
-  *{box-sizing:border-box;}
-  body{height:100%; margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
-  header{position:sticky; top:env(safe-area-inset-top,0px); background:var(--bg); border-bottom:1px solid var(--line); padding:18px 20px 14px; z-index:10;}
-  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
-  .brand h1{font-size:1.5rem; margin:0; letter-spacing:-0.02em;}
-  .brand h1 span{color:var(--accent);}
-  .tagline{color:var(--sub); font-size:0.85rem; margin:2px 0 14px;}
-  .btn{padding:9px 16px; border:none; border-radius:999px; background:var(--accent2); color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer;}
-  .btn.ghost{background:transparent; color:var(--sub); border:1px solid var(--line);}
-  .filters{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;}
-  .chip{flex:0 0 auto; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; white-space:nowrap;}
-  .chip.active{background:var(--accent); color:#fff; border-color:var(--accent);}
-  main{max-width:900px; margin:0 auto; padding:20px;}
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px;}
-  .cat{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent2); font-weight:600;}
-  .name{font-size:1.05rem; font-weight:600; margin:0;}
-  .area,.rating{color:var(--sub); font-size:0.85rem;}
-  .photo{width:100%; height:150px; object-fit:cover; border-radius:10px; background:var(--line);}
-  .strip{display:flex; gap:6px;}
-  .sthumb{width:48px; height:48px; object-fit:cover; border-radius:6px; cursor:pointer; opacity:.85;}
-  .sthumb:hover{opacity:1;}
-  .site{color:var(--accent2); font-size:0.85rem; word-break:break-all;}
-  .hint{font-size:0.75rem; color:var(--sub); margin:-4px 0 8px;}
-  .thumbs{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
-  .thumbwrap{position:relative;}
-  .thumb{width:70px; height:70px; object-fit:cover; border-radius:8px; display:block;}
-  .x{position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%; border:none; background:var(--accent); color:#fff; cursor:pointer; line-height:1; font-size:14px; padding:0;}
-  .mini{margin-top:6px; align-self:flex-start; padding:8px 14px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600; border:none; cursor:pointer;}
-  .empty{text-align:center; color:var(--sub); padding:40px 0;}
-  .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:20px;}
-  .panel h2{margin:0 0 10px; font-size:1.05rem;}
-  input,select{width:100%; padding:10px; margin-bottom:8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-size:0.9rem;}
-  .status{font-size:0.8rem; color:var(--accent2); min-height:1.2em;}
-  .modal-bg{position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:100; padding:20px;}
-  .modal-bg.open{display:flex;}
-  .modal{background:var(--card); border-radius:14px; padding:22px; width:100%; max-width:360px;}
-  .modal h2{margin:0 0 10px; font-size:1.1rem;}
-  .switch{font-size:0.8rem; color:var(--accent2); cursor:pointer; text-align:center; margin-top:4px;}
-  footer{text-align:center; color:var(--sub); font-size:0.8rem; padding:30px 20px;}
+  :root{--bg:#fdfaf6;--card:#fff;--ink:#231f20;--sub:#6b6560;--accent:#e85d3d;--accent2:#2c7a7b;--line:#eee3d8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171412;--card:#221e1b;--ink:#f3ede6;--sub:#b7ada2;--line:#332c26}}
+  :root[data-theme="dark"]{--bg:#171412;--card:#221e1b;--ink:#f3ede6;--sub:#b7ada2;--line:#332c26}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+  *{box-sizing:border-box}
+  body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);border-bottom:1px solid var(--line);padding:18px 20px 14px;z-index:10}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .brand h1{font-size:1.5rem;margin:0;letter-spacing:-.02em}
+  .brand h1 span{color:var(--accent)}
+  .tagline{color:var(--sub);font-size:.85rem;margin:2px 0 12px}
+  .bar{display:flex;gap:8px;margin-bottom:10px}
+  .bar input{flex:2;margin:0}.bar select{flex:1;margin:0}
+  .btn{padding:9px 16px;border:none;border-radius:999px;background:var(--accent2);color:#fff;font-size:.85rem;font-weight:600;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--sub);border:1px solid var(--line)}
+  .filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .chip{flex:0 0 auto;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:.85rem;cursor:pointer;white-space:nowrap}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  main{max-width:900px;margin:0 auto;padding:20px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
+  .cat{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-weight:600}
+  .name{font-size:1.05rem;font-weight:600;margin:0}
+  .area,.rating{color:var(--sub);font-size:.85rem}
+  .photo{width:100%;height:150px;object-fit:cover;border-radius:10px;background:var(--line)}
+  .strip{display:flex;gap:6px}
+  .sthumb{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:.85}
+  .sthumb:hover{opacity:1}
+  .site{color:var(--accent2);font-size:.85rem;word-break:break-all}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .mini{padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-size:.85rem;font-weight:600;border:1px solid var(--accent);cursor:pointer;font-family:inherit}
+  .mini.alt{background:transparent;color:var(--accent)}
+  .hint{font-size:.75rem;color:var(--sub);margin:-4px 0 8px}
+  .lbl{font-size:.75rem;color:var(--sub)}
+  .hp{position:absolute;left:-9999px}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .thumbwrap{position:relative}
+  .thumb{width:70px;height:70px;object-fit:cover;border-radius:8px;display:block}
+  .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:var(--accent);color:#fff;cursor:pointer;line-height:1;font-size:14px;padding:0}
+  .empty{text-align:center;color:var(--sub);padding:40px 0}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+  .panel h2{margin:0 0 10px;font-size:1.05rem}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+  .stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:1.3rem}.stat span{font-size:.75rem;color:var(--sub)}
+  .req{border-top:1px solid var(--line);padding:10px 0;font-size:.9rem}
+  .req p{margin:6px 0 0;white-space:pre-wrap}.req small{color:var(--sub)}
+  input,select,textarea{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:.9rem;font-family:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .status{font-size:.8rem;color:var(--accent2);min-height:1.2em}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--card);border-radius:14px;padding:22px;width:100%;max-width:380px;max-height:90vh;overflow:auto}
+  .modal h2{margin:0 0 10px;font-size:1.1rem}
+  .switch{font-size:.8rem;color:var(--accent2);cursor:pointer;text-align:center;margin-top:4px}
+  footer{text-align:center;color:var(--sub);font-size:.8rem;padding:30px 20px}
 </style>
 </head>
 <body>
@@ -66,12 +72,16 @@
     <div id="authArea"><button class="btn" id="openAuth">Vendor Log In</button></div>
   </div>
   <p class="tagline">Find local party vendors in League City — all in one place.</p>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search (e.g. bounce house)" aria-label="Search vendors">
+    <select id="areaSel" aria-label="Filter by area"></select>
+  </div>
   <div class="filters" id="filters"></div>
 </header>
 <main>
   <div id="myPanel"></div>
   <div class="grid" id="grid"></div>
-  <p class="empty" id="empty" style="display:none;">No vendors in this category yet.</p>
+  <p class="empty" id="empty" style="display:none;">No vendors match that search yet.</p>
 </main>
 <footer>NearlyBooked · League City, TX</footer>
 
@@ -87,227 +97,306 @@
   </div>
 </div>
 
+<div class="modal-bg" id="qModalBg">
+  <div class="modal">
+    <h2 id="qTitle">Request a quote</h2>
+    <input id="qName" placeholder="Your name" maxlength="100">
+    <input id="qEmail" type="email" placeholder="Your email" maxlength="200">
+    <input id="qPhone" placeholder="Phone (optional)" maxlength="40">
+    <label class="lbl" for="qDate">Event date (optional)</label>
+    <input id="qDate" type="date">
+    <textarea id="qDetails" placeholder="Tell them about your event (number of kids, location, what you need)" maxlength="1000"></textarea>
+    <input id="qHp" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="hint">Your details are sent only to this vendor.</p>
+    <p class="status" id="qStatus"></p>
+    <button class="btn" id="qSend" style="width:100%">Send request</button>
+    <p class="switch" id="qCancel">Cancel</p>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://rrxvfjtgutdcnsazydep.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OQueaPLqab2fgQ0pLgA02A_JhAoBKGl";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const CATS = ["Photography","Entertainment","Bounce Houses","Party Rentals","Bakery","Catering","DJ"];
+const AREAS = ["League City","Clear Lake","Friendswood","Webster","Seabrook","Kemah","Dickinson","Pearland","Texas City","Alvin","Houston","Other"];
 const MAX_PHOTOS = 4;
-let vendors = [];
-let activeCat = "All";
-let session = null;
+let vendors = [], activeCat = "All", activeArea = "", q = "", session = null, qVendor = null;
 
-const gridEl = document.getElementById('grid');
-const emptyEl = document.getElementById('empty');
-const filtersEl = document.getElementById('filters');
-const authArea = document.getElementById('authArea');
-const myPanel = document.getElementById('myPanel');
+const $ = id => document.getElementById(id);
+const gridEl = $('grid'), emptyEl = $('empty'), filtersEl = $('filters'),
+      authArea = $('authArea'), myPanel = $('myPanel'), areaSel = $('areaSel');
 
-// Escape text so nobody can inject HTML into the page
 function esc(t){
-  return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
+  return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
-// Only allow normal http/https links
 function safeUrl(u){
   if (!u) return '';
   u = String(u).trim();
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
-  try {
-    const x = new URL(u);
-    return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : '';
-  } catch(e){ return ''; }
+  try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; }
+  catch(e){ return ''; }
 }
-
-// Get a vendor's photos (max 4). Falls back to the old single photo_url.
 function getPhotos(v){
   let p = Array.isArray(v.photos) ? v.photos.map(safeUrl).filter(Boolean) : [];
-  if (!p.length && v.photo_url){
-    const u = safeUrl(v.photo_url);
-    if (u) p = [u];
-  }
+  if (!p.length && v.photo_url){ const u = safeUrl(v.photo_url); if (u) p = [u]; }
   return p.slice(0, MAX_PHOTOS);
 }
 
-async function loadVendors(){
-  const { data, error } = await sb.from('vendors').select('*');
-  vendors = data || [];
-  renderFilters(); renderGrid();
+// ---- Stats tracking (skips the vendor's own visits) ----
+function logEvent(uid, type){
+  if (!uid) return;
+  if (session && session.user.id === uid) return;
+  sb.from('events').insert({ vendor_user_id: uid, type: type }).then(function(){});
 }
+const seen = new Set();
+const io = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    const uid = en.target.dataset.uid;
+    io.unobserve(en.target);
+    if (uid && !seen.has(uid)){ seen.add(uid); logEvent(uid, 'view'); }
+  });
+}, { threshold: 0.5 }) : null;
 
+// ---- Directory ----
+async function loadVendors(){
+  const { data } = await sb.from('vendors').select('*');
+  vendors = data || [];
+  renderAreas(); renderFilters(); renderGrid();
+}
+function renderAreas(){
+  const areas = [...new Set(vendors.map(v => v.area).filter(Boolean))].sort();
+  if (activeArea && !areas.includes(activeArea)) activeArea = '';
+  areaSel.innerHTML = '<option value="">All areas</option>' +
+    areas.map(a => `<option${a === activeArea ? ' selected' : ''}>${esc(a)}</option>`).join('');
+}
 function renderFilters(){
-  const cats = ["All", ...new Set(vendors.map(v=>v.cat))];
-  filtersEl.innerHTML = cats.map(c=>`<button class="chip${c===activeCat?' active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
-  filtersEl.querySelectorAll('.chip').forEach(btn=>{
-    btn.onclick = ()=>{ activeCat = btn.dataset.cat; renderFilters(); renderGrid(); };
+  const cats = ["All", ...new Set(vendors.map(v => v.cat))];
+  filtersEl.innerHTML = cats.map(c => `<button class="chip${c === activeCat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  filtersEl.querySelectorAll('.chip').forEach(btn => {
+    btn.onclick = () => { activeCat = btn.dataset.cat; renderFilters(); renderGrid(); };
   });
 }
-
+function visible(){
+  const t = q.trim().toLowerCase();
+  return vendors.filter(v =>
+    (activeCat === "All" || v.cat === activeCat) &&
+    (!activeArea || v.area === activeArea) &&
+    (!t || [v.name, v.cat, v.area].join(' ').toLowerCase().includes(t)));
+}
 function renderGrid(){
-  const list = activeCat==="All" ? vendors : vendors.filter(v=>v.cat===activeCat);
+  const list = visible();
   gridEl.innerHTML = list.map(v => {
-    const photos = getPhotos(v);
-    const site = safeUrl(v.website);
+    const photos = getPhotos(v), site = safeUrl(v.website), uid = esc(v.user_id || '');
     return `
-    <div class="card">
+    <div class="card" data-uid="${uid}">
       ${photos.length ? `<img class="photo main" src="${esc(photos[0])}" alt="${esc(v.name)}" loading="lazy">` : ''}
-      ${photos.length > 1 ? `<div class="strip">${photos.map((u,i)=>`<img class="sthumb" src="${esc(u)}" data-full="${esc(u)}" alt="Photo ${i+1} of ${esc(v.name)}" loading="lazy">`).join('')}</div>` : ''}
+      ${photos.length > 1 ? `<div class="strip">${photos.map((u, i) => `<img class="sthumb" src="${esc(u)}" data-full="${esc(u)}" alt="Photo ${i + 1} of ${esc(v.name)}" loading="lazy">`).join('')}</div>` : ''}
       <span class="cat">${esc(v.cat)}</span>
       <p class="name">${esc(v.name)}</p>
       <span class="area">${esc(v.area)}</span>
       <span class="rating">${esc(v.rating)}</span>
-      ${site ? `<a class="site" href="${esc(site)}" target="_blank" rel="noopener noreferrer">Visit website</a>` : ''}
-      ${v.email ? `<a class="mini" href="mailto:${esc(v.email)}">Contact</a>` : ''}
+      ${site ? `<a class="site" href="${esc(site)}" target="_blank" rel="noopener noreferrer" data-track="website" data-uid="${uid}">Visit website</a>` : ''}
+      <div class="acts">
+        ${v.user_id ? `<button class="mini qbtn" data-uid="${uid}">Request a quote</button>` : ''}
+        ${v.email ? `<a class="mini alt" href="mailto:${esc(v.email)}" data-track="contact" data-uid="${uid}">Email</a>` : ''}
+      </div>
     </div>`;
   }).join('');
   emptyEl.style.display = list.length ? 'none' : 'block';
+  if (io) gridEl.querySelectorAll('.card').forEach(c => io.observe(c));
 }
-
-// Click a small photo to show it big
-gridEl.addEventListener('click', function(e){
+gridEl.addEventListener('click', e => {
   const t = e.target;
   if (t.classList && t.classList.contains('sthumb')){
     const main = t.closest('.card').querySelector('.photo.main');
     if (main) main.src = t.dataset.full;
+    return;
   }
+  const qb = t.closest('.qbtn');
+  if (qb){ openQuote(qb.dataset.uid); return; }
+  const tr = t.closest('[data-track]');
+  if (tr) logEvent(tr.dataset.uid, tr.dataset.track);
 });
+$('q').oninput = e => { q = e.target.value; renderGrid(); };
+areaSel.onchange = () => { activeArea = areaSel.value; renderGrid(); };
 
+// ---- Quote request (customers) ----
+function openQuote(uid){
+  qVendor = vendors.find(v => v.user_id === uid);
+  if (!qVendor) return;
+  $('qTitle').textContent = 'Request a quote from ' + qVendor.name;
+  $('qStatus').textContent = '';
+  $('qModalBg').classList.add('open');
+}
+$('qCancel').onclick = () => $('qModalBg').classList.remove('open');
+$('qSend').onclick = async () => {
+  const st = $('qStatus');
+  if ($('qHp').value){ $('qModalBg').classList.remove('open'); return; } // bot trap
+  const name = $('qName').value.trim(), email = $('qEmail').value.trim();
+  if (!name || !email){ st.textContent = "Please enter your name and email."; return; }
+  if (!/^\S+@\S+\.\S+$/.test(email)){ st.textContent = "Please enter a valid email."; return; }
+  st.textContent = "Sending...";
+  const { error } = await sb.from('quotes').insert({
+    vendor_user_id: qVendor.user_id,
+    vendor_name: qVendor.name,
+    customer_name: name,
+    customer_email: email,
+    customer_phone: $('qPhone').value.trim() || null,
+    event_date: $('qDate').value || null,
+    details: $('qDetails').value.trim() || null
+  });
+  if (error){ st.textContent = "Couldn't send. Please try again."; return; }
+  st.textContent = "Request sent to " + qVendor.name + ".";
+  ['qName','qEmail','qPhone','qDate','qDetails'].forEach(id => $(id).value = '');
+  setTimeout(() => $('qModalBg').classList.remove('open'), 1600);
+};
+
+// ---- Vendor account area ----
 function renderAuthArea(){
   if (session){
     authArea.innerHTML = `<button class="btn ghost" id="logoutBtn">Log Out</button>`;
-    document.getElementById('logoutBtn').onclick = async ()=>{
-      await sb.auth.signOut(); session = null; renderAuthArea(); renderMyPanel();
-    };
+    $('logoutBtn').onclick = async () => { await sb.auth.signOut(); session = null; renderAuthArea(); renderMyPanel(); };
   } else {
     authArea.innerHTML = `<button class="btn" id="openAuth">Vendor Log In</button>`;
-    document.getElementById('openAuth').onclick = openAuthModal;
+    $('openAuth').onclick = () => $('authModalBg').classList.add('open');
   }
 }
 
 function renderMyPanel(){
   if (!session){ myPanel.innerHTML = ''; return; }
   const mine = vendors.find(v => v.user_id === session.user.id);
-  let keep = mine ? getPhotos(mine) : [];
+  const keep = mine ? getPhotos(mine) : [];
+  const areas = (mine && mine.area && !AREAS.includes(mine.area)) ? [mine.area, ...AREAS] : AREAS;
 
-  myPanel.innerHTML = `
+  let html = `
     <div class="panel">
       <h2>${mine ? 'My Listing' : 'Add Your Listing — Free'}</h2>
       <input id="mName" placeholder="Business name" value="${esc(mine ? mine.name : '')}">
-      <select id="mCat">${CATS.map(c=>`<option ${mine && mine.cat===c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
-      <input id="mArea" placeholder="Area (e.g. League City)" value="${esc(mine ? mine.area : '')}">
+      <select id="mCat">${CATS.map(c => `<option ${mine && mine.cat === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+      <select id="mArea">${areas.map(a => `<option ${mine && mine.area === a ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select>
       <input id="mEmail" placeholder="Contact email" value="${esc(mine ? mine.email : '')}">
       <input id="mWebsite" placeholder="Website (optional)" value="${esc(mine ? mine.website : '')}">
       <div class="thumbs" id="mThumbs"></div>
       <input id="mPhoto" type="file" accept="image/*" multiple>
       <p class="hint">Up to 4 photos total, max 5 MB each. Click × on a photo to remove it.</p>
       <p class="status" id="mStatus"></p>
-      <div style="display:flex; gap:8px;">
+      <div style="display:flex;gap:8px;">
         <button class="btn" id="mSave" style="flex:1">${mine ? 'Save Changes' : 'Add Listing'}</button>
         ${mine ? `<button class="btn ghost" id="mDelete">Delete</button>` : ''}
       </div>
     </div>`;
+  if (mine) html += `
+    <div class="panel"><h2>Your stats (last 30 days)</h2><div class="stats" id="statsBox">Loading...</div></div>
+    <div class="panel"><h2>Quote requests</h2><div id="reqBox">Loading...</div></div>`;
+  myPanel.innerHTML = html;
 
   function drawThumbs(){
-    const box = document.getElementById('mThumbs');
-    box.innerHTML = keep.map((u,i)=>`
-      <div class="thumbwrap">
-        <img class="thumb" src="${esc(u)}" alt="Photo ${i+1}">
-        <button type="button" class="x" data-i="${i}" aria-label="Remove photo ${i+1}">×</button>
-      </div>`).join('');
-    box.querySelectorAll('.x').forEach(b=>{
-      b.onclick = ()=>{ keep.splice(Number(b.dataset.i), 1); drawThumbs(); };
-    });
+    const box = $('mThumbs');
+    box.innerHTML = keep.map((u, i) => `
+      <div class="thumbwrap"><img class="thumb" src="${esc(u)}" alt="Photo ${i + 1}">
+      <button type="button" class="x" data-i="${i}" aria-label="Remove photo ${i + 1}">×</button></div>`).join('');
+    box.querySelectorAll('.x').forEach(b => { b.onclick = () => { keep.splice(Number(b.dataset.i), 1); drawThumbs(); }; });
   }
   drawThumbs();
 
-  document.getElementById('mSave').onclick = async ()=>{
-    const name = document.getElementById('mName').value.trim();
-    const cat = document.getElementById('mCat').value;
-    const area = document.getElementById('mArea').value.trim();
-    const email = document.getElementById('mEmail').value.trim();
-    const website = document.getElementById('mWebsite').value.trim();
-    const files = Array.from(document.getElementById('mPhoto').files);
-    const statusEl = document.getElementById('mStatus');
-
-    if (!name || !area || !email){ statusEl.textContent = "Fill in name, area and email."; return; }
-    if (website && !safeUrl(website)){ statusEl.textContent = "Enter a valid website link."; return; }
+  $('mSave').onclick = async () => {
+    const name = $('mName').value.trim(), cat = $('mCat').value, area = $('mArea').value,
+          email = $('mEmail').value.trim(), website = $('mWebsite').value.trim(),
+          files = Array.from($('mPhoto').files), st = $('mStatus');
+    if (!name || !email){ st.textContent = "Fill in name and email."; return; }
+    if (website && !safeUrl(website)){ st.textContent = "Enter a valid website link."; return; }
     if (keep.length + files.length > MAX_PHOTOS){
-      statusEl.textContent = "Max 4 photos. You have " + keep.length + " saved and picked " + files.length + " more. Remove some or pick fewer.";
+      st.textContent = "Max 4 photos. You have " + keep.length + " saved and picked " + files.length + " more.";
       return;
     }
     for (const f of files){
-      if (!f.type.startsWith('image/')){ statusEl.textContent = "All photos must be images."; return; }
-      if (f.size > 5 * 1024 * 1024){ statusEl.textContent = "Each photo must be under 5 MB."; return; }
+      if (!f.type.startsWith('image/')){ st.textContent = "All photos must be images."; return; }
+      if (f.size > 5 * 1024 * 1024){ st.textContent = "Each photo must be under 5 MB."; return; }
     }
-
-    statusEl.textContent = "Saving...";
+    st.textContent = "Saving...";
     const uploaded = [];
     for (let i = 0; i < files.length; i++){
       const f = files[i];
       const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
       const path = session.user.id + '/' + Date.now() + '-' + i + '.' + ext;
       const up = await sb.storage.from('vendor-photos').upload(path, f);
-      if (up.error){ statusEl.textContent = "Photo upload failed: " + up.error.message; return; }
+      if (up.error){ st.textContent = "Photo upload failed: " + up.error.message; return; }
       uploaded.push(sb.storage.from('vendor-photos').getPublicUrl(path).data.publicUrl);
     }
-
     const fields = { name, cat, area, email, website: safeUrl(website), photos: [...keep, ...uploaded].slice(0, MAX_PHOTOS) };
-
-    let res;
-    if (mine){
-      res = await sb.from('vendors').update(fields).eq('user_id', session.user.id);
-    } else {
-      res = await sb.from('vendors').insert({ ...fields, user_id: session.user.id, rating: "New" });
-    }
-    if (res.error){ statusEl.textContent = "Error: " + res.error.message; return; }
-    statusEl.textContent = "Saved!";
+    const res = mine
+      ? await sb.from('vendors').update(fields).eq('user_id', session.user.id)
+      : await sb.from('vendors').insert({ ...fields, user_id: session.user.id, rating: "New" });
+    if (res.error){ st.textContent = "Error: " + res.error.message; return; }
+    st.textContent = "Saved!";
     await loadVendors(); renderMyPanel();
   };
 
   if (mine){
-    document.getElementById('mDelete').onclick = async ()=>{
+    $('mDelete').onclick = async () => {
       if (!confirm("Delete your listing?")) return;
       await sb.from('vendors').delete().eq('user_id', session.user.id);
       await loadVendors(); renderMyPanel();
     };
+    loadDashboard();
   }
 }
 
-// Login / signup popup
+async function loadDashboard(){
+  const uid = session.user.id;
+  const since = new Date(Date.now() - 30 * 864e5);
+  const count = type => sb.from('events').select('id', { count: 'exact', head: true })
+    .eq('vendor_user_id', uid).eq('type', type).gte('created_at', since.toISOString());
+  const [v, c, w, qs] = await Promise.all([
+    count('view'), count('contact'), count('website'),
+    sb.from('quotes').select('*').eq('vendor_user_id', uid).order('created_at', { ascending: false }).limit(50)
+  ]);
+  const box = $('statsBox'), rb = $('reqBox');
+  if (!box || !rb) return;
+  const rows = qs.data || [];
+  const recent = rows.filter(r => new Date(r.created_at) >= since).length;
+  box.innerHTML = [['Views', v.count || 0], ['Email clicks', c.count || 0], ['Website clicks', w.count || 0], ['Quote requests', recent]]
+    .map(s => `<div class="stat"><b>${s[1]}</b><span>${s[0]}</span></div>`).join('');
+  if (qs.error){ rb.textContent = "Couldn't load requests."; return; }
+  rb.innerHTML = rows.length ? rows.map(r => `
+    <div class="req">
+      <b>${esc(r.customer_name)}</b> · <a href="mailto:${esc(r.customer_email)}">${esc(r.customer_email)}</a>${r.customer_phone ? ' · ' + esc(r.customer_phone) : ''}<br>
+      <small>${r.event_date ? 'Event: ' + esc(r.event_date) + ' · ' : ''}Sent ${esc(new Date(r.created_at).toLocaleDateString())}</small>
+      ${r.details ? `<p>${esc(r.details)}</p>` : ''}
+    </div>`).join('') : '<p class="hint">No requests yet.</p>';
+}
+
+// ---- Login / signup popup ----
 let authMode = 'login';
-const authModalBg = document.getElementById('authModalBg');
-function openAuthModal(){ authModalBg.classList.add('open'); }
-document.getElementById('authCancel').onclick = ()=> authModalBg.classList.remove('open');
-document.getElementById('authSwitch').onclick = ()=>{
+$('authCancel').onclick = () => $('authModalBg').classList.remove('open');
+$('authSwitch').onclick = () => {
   authMode = authMode === 'login' ? 'signup' : 'login';
-  document.getElementById('authTitle').textContent = authMode==='login' ? 'Vendor Log In' : 'Vendor Sign Up';
-  document.getElementById('authSubmit').textContent = authMode==='login' ? 'Log In' : 'Sign Up';
-  document.getElementById('authSwitch').textContent = authMode==='login' ? 'New vendor? Sign up instead' : 'Already have an account? Log in';
+  $('authTitle').textContent = authMode === 'login' ? 'Vendor Log In' : 'Vendor Sign Up';
+  $('authSubmit').textContent = authMode === 'login' ? 'Log In' : 'Sign Up';
+  $('authSwitch').textContent = authMode === 'login' ? 'New vendor? Sign up instead' : 'Already have an account? Log in';
 };
-document.getElementById('authSubmit').onclick = async ()=>{
-  const email = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPass').value;
-  const statusEl = document.getElementById('authStatus');
-  if (!email || !password){ statusEl.textContent = "Enter email and password."; return; }
-  statusEl.textContent = "Working...";
-  const result = authMode==='login'
+$('authSubmit').onclick = async () => {
+  const email = $('authEmail').value.trim(), password = $('authPass').value, st = $('authStatus');
+  if (!email || !password){ st.textContent = "Enter email and password."; return; }
+  st.textContent = "Working...";
+  const result = authMode === 'login'
     ? await sb.auth.signInWithPassword({ email, password })
     : await sb.auth.signUp({ email, password });
-  if (result.error){ statusEl.textContent = result.error.message; return; }
+  if (result.error){ st.textContent = result.error.message; return; }
   session = result.data.session;
-  authModalBg.classList.remove('open');
-  statusEl.textContent = '';
+  $('authModalBg').classList.remove('open');
+  st.textContent = '';
   renderAuthArea(); renderMyPanel();
 };
 
 (async () => {
   const { data } = await sb.auth.getSession();
   session = data.session;
-  await loadVendors();
   renderAuthArea();
+  await loadVendors();
   renderMyPanel();
 })();
 </script>
