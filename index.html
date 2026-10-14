@@ -88,10 +88,12 @@
 <div class="modal-bg" id="authModalBg">
   <div class="modal">
     <h2 id="authTitle">Vendor Log In</h2>
-    <input id="authEmail" placeholder="Email" type="email">
-    <input id="authPass" placeholder="Password" type="password">
+    <input id="authEmail" placeholder="Email" type="email" autocomplete="email">
+    <input id="authPass" placeholder="Password" type="password" autocomplete="current-password">
+    <input id="authPass2" placeholder="Confirm new password" type="password" autocomplete="new-password" style="display:none">
     <p class="status" id="authStatus"></p>
     <button class="btn" id="authSubmit" style="width:100%">Log In</button>
+    <p class="switch" id="authForgot">Forgot password?</p>
     <p class="switch" id="authSwitch">New vendor? Sign up instead</p>
     <p class="switch" id="authCancel">Cancel</p>
   </div>
@@ -234,7 +236,7 @@ function openQuote(uid){
 $('qCancel').onclick = () => $('qModalBg').classList.remove('open');
 $('qSend').onclick = async () => {
   const st = $('qStatus');
-  if ($('qHp').value){ $('qModalBg').classList.remove('open'); return; } // bot trap
+  if ($('qHp').value){ $('qModalBg').classList.remove('open'); return; }
   const name = $('qName').value.trim(), email = $('qEmail').value.trim();
   if (!name || !email){ st.textContent = "Please enter your name and email."; return; }
   if (!/^\S+@\S+\.\S+$/.test(email)){ st.textContent = "Please enter a valid email."; return; }
@@ -261,7 +263,7 @@ function renderAuthArea(){
     $('logoutBtn').onclick = async () => { await sb.auth.signOut(); session = null; renderAuthArea(); renderMyPanel(); };
   } else {
     authArea.innerHTML = `<button class="btn" id="openAuth">Vendor Log In</button>`;
-    $('openAuth').onclick = () => $('authModalBg').classList.add('open');
+    $('openAuth').onclick = () => { setMode('login'); $('authModalBg').classList.add('open'); };
   }
 }
 
@@ -369,17 +371,61 @@ async function loadDashboard(){
     </div>`).join('') : '<p class="hint">No requests yet.</p>';
 }
 
-// ---- Login / signup popup ----
+// ---- Login / signup / forgot password popup ----
 let authMode = 'login';
-$('authCancel').onclick = () => $('authModalBg').classList.remove('open');
-$('authSwitch').onclick = () => {
-  authMode = authMode === 'login' ? 'signup' : 'login';
-  $('authTitle').textContent = authMode === 'login' ? 'Vendor Log In' : 'Vendor Sign Up';
-  $('authSubmit').textContent = authMode === 'login' ? 'Log In' : 'Sign Up';
-  $('authSwitch').textContent = authMode === 'login' ? 'New vendor? Sign up instead' : 'Already have an account? Log in';
-};
+function setMode(mode){
+  authMode = mode;
+  const titles = { login: 'Vendor Log In', signup: 'Vendor Sign Up', forgot: 'Reset your password', recovery: 'Set a new password' };
+  const buttons = { login: 'Log In', signup: 'Sign Up', forgot: 'Send reset link', recovery: 'Save new password' };
+  $('authTitle').textContent = titles[mode];
+  $('authSubmit').textContent = buttons[mode];
+  $('authEmail').style.display = (mode === 'recovery') ? 'none' : '';
+  $('authPass').style.display = (mode === 'forgot') ? 'none' : '';
+  $('authPass').placeholder = (mode === 'recovery') ? 'New password (at least 6 characters)' : 'Password';
+  $('authPass').autocomplete = (mode === 'login') ? 'current-password' : 'new-password';
+  $('authPass2').style.display = (mode === 'recovery') ? '' : 'none';
+  $('authForgot').style.display = (mode === 'login') ? '' : 'none';
+  $('authSwitch').style.display = (mode === 'recovery') ? 'none' : '';
+  $('authSwitch').textContent = (mode === 'login') ? 'New vendor? Sign up instead'
+    : (mode === 'signup') ? 'Already have an account? Log in' : 'Back to log in';
+  $('authPass').value = ''; $('authPass2').value = '';
+  $('authStatus').textContent = '';
+}
+$('authCancel').onclick = () => { $('authModalBg').classList.remove('open'); setMode('login'); };
+$('authSwitch').onclick = () => setMode(authMode === 'login' ? 'signup' : 'login');
+$('authForgot').onclick = () => setMode('forgot');
+
 $('authSubmit').onclick = async () => {
-  const email = $('authEmail').value.trim(), password = $('authPass').value, st = $('authStatus');
+  const st = $('authStatus');
+  const email = $('authEmail').value.trim();
+  const password = $('authPass').value;
+
+  if (authMode === 'forgot'){
+    if (!email){ st.textContent = "Enter your email."; return; }
+    st.textContent = "Sending...";
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://nearlybooked.net' });
+    if (error){ st.textContent = error.message; return; }
+    st.textContent = "If that email has an account, a reset link is on its way. Check your spam folder too.";
+    return;
+  }
+
+  if (authMode === 'recovery'){
+    if (password.length < 6){ st.textContent = "Password must be at least 6 characters."; return; }
+    if (password !== $('authPass2').value){ st.textContent = "Passwords don't match."; return; }
+    st.textContent = "Saving...";
+    const { error } = await sb.auth.updateUser({ password });
+    if (error){ st.textContent = error.message; return; }
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    st.textContent = "Password updated. You're logged in.";
+    setTimeout(() => {
+      $('authModalBg').classList.remove('open');
+      setMode('login');
+      renderAuthArea(); renderMyPanel();
+    }, 1400);
+    return;
+  }
+
   if (!email || !password){ st.textContent = "Enter email and password."; return; }
   st.textContent = "Working...";
   const result = authMode === 'login'
@@ -388,9 +434,19 @@ $('authSubmit').onclick = async () => {
   if (result.error){ st.textContent = result.error.message; return; }
   session = result.data.session;
   $('authModalBg').classList.remove('open');
-  st.textContent = '';
+  setMode('login');
   renderAuthArea(); renderMyPanel();
 };
+
+// When someone clicks the link in their reset email, show the "new password" box
+sb.auth.onAuthStateChange((event, s) => {
+  if (event === 'PASSWORD_RECOVERY'){
+    session = s;
+    setMode('recovery');
+    $('authModalBg').classList.add('open');
+    renderAuthArea();
+  }
+});
 
 (async () => {
   const { data } = await sb.auth.getSession();
